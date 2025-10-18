@@ -1,202 +1,164 @@
-# 🐚 Bash Scripting Journey – README
+# 🐚 Bash Scripting Journey
 
-## 📁 Overview
-This repository documents my **hands-on journey into Bash scripting** and **Linux command-line fundamentals**.  
-It includes a series of **36+ progressively structured `.sh` files**, each demonstrating key concepts — from **basic syntax and variables** to **loops**, **functions**, **file handling**, and **system automation**.
+## Overview
+This repository documents a hands-on journey into Bash scripting and Linux command-line fundamentals. It contains a collection of progressively structured scripts that demonstrate concepts from basic syntax and variables to loops, functions, file handling, and system automation.
 
-The folder is designed as a **self-paced learning curriculum**, ideal for **beginners** and **intermediate learners** aiming to master **Bash scripting** for:
-- Automation
-- DevOps workflows
-- System administration
+The materials are organized as a self-paced learning curriculum suitable for beginners and intermediate learners interested in automation, DevOps workflows, and system administration.
 
 ---
 
-## 📚 Contents
-Each script corresponds to a specific concept or use case. Examples include:
+## Repository structure (suggested)
 
-| **Topic**                     | **Description**                                                                |
-|--------------------------------|--------------------------------------------------------------------------------|
-| Basic Syntax & Variables       | Echo, variables, constants, user input                                        |
-| Arrays & Strings               | Indexed and associative arrays, string manipulation                          |
-| Arithmetic & Conditions        | Arithmetic operations, `if` statements, comparison operators                  |
-| Loops                          | `for`, `while`, `until` loops and control flow with `break` and `continue`   |
-| Case Statements & Logical Ops  | `case` structure, `&&`, `||` usage                                            |
-| File Handling                  | Read, write, check, and manipulate files                                     |
-| Functions & Arguments          | Creating reusable functions with parameters                                  |
-| User & System Checks           | Root user validation, connectivity testing                                  |
-| Logging & Debugging            | Using `logger`, enabling `set -x`, error handling                             |
-| Background Execution           | Running scripts using `nohup` and redirecting outputs                         |
-
-**Additional Folders**:
-- `test/` – Sample files like `test.csv` for file reading demos.  
-- `all_files/` – Used for output redirection and file listing.  
-- `nohup.out` – Captures output from background scripts.
+- projects/        — Practical scripts and automations  
+- scripts/         — Individual example scripts and exercises  
+- test/            — Sample files used by scripts (e.g., `test.csv`)  
+- all_files/       — Example output files and listings  
+- README.md        — This file
 
 ---
 
-# 🚀 Projects (Main Section)
+## Contents
+Each script focuses on a specific concept or use case. Topics covered include:
 
-These are **real-world automation scripts** built using Bash.  
-Each project demonstrates how scripting can solve practical system-level problems.
+- Basic syntax & variables (echo, variables, user input)  
+- Arrays & strings (indexed and associative arrays, string manipulation)  
+- Arithmetic & conditionals (arithmetic operations, `if` statements)  
+- Loops (`for`, `while`, `until`, `break`, `continue`)  
+- Case statements & logical operators (`case`, `&&`, `||`)  
+- File handling (read, write, check, manipulate files)  
+- Functions & arguments (creating reusable functions)  
+- User & system checks (root validation, connectivity tests)  
+- Logging & debugging (`logger`, `set -x`, error handling)  
+- Background execution (`nohup`, output redirection)
 
 ---
 
-## 🧠 **Project 1: Monitor Free Memory and Alert**
+## Projects (examples)
+Below are three example automation projects included (or easy to add) in this repository. Each includes a description, the core script, and setup notes.
 
-**Purpose**:  
-Monitor available RAM and alert the user if memory drops below a defined threshold.
+### Project 1 — Monitor free memory and alert
+Purpose: Monitor available RAM and print an alert when memory drops below a threshold.
 
-**Script Logic**:
-- Uses `free -mt` to check total memory.
-- Extracts available memory using `awk`.
-- Compares it against a threshold (e.g., 500MB).
-- Prints a warning if memory is low.
+```bash
+#!/usr/bin/env bash
+# monitor_memory.sh
+THRESHOLD_MB=500
+FREE_MB=$(free -m | awk '/Mem:/ {print $7}')
 
-''' bash '''
-#!/bin/bash
-FREE_SPACE=$(free -mt | grep "Total" | awk '{print $4}')
-TH=500
-
-if [[ $FREE_SPACE -lt $TH ]]; then
-  echo "⚠️ WARNING: RAM is running low"
-else
-  echo "✅ RAM Space is sufficient - $FREE_SPACE MB"
+if [[ -z "$FREE_MB" ]]; then
+  echo "Unable to determine available memory"
+  exit 1
 fi
-#### Use Case:
-Ideal for servers or systems where memory usage needs to be monitored periodically.
 
-## 💽 Project 2: Monitor Disk Space and Send Alert Email
-Purpose:
-Monitor disk usage and send an alert email if free space falls below a threshold.
+if (( FREE_MB < THRESHOLD_MB )); then
+  echo "⚠️ WARNING: RAM is running low — ${FREE_MB} MB available"
+else
+  echo "✅ RAM sufficient — ${FREE_MB} MB available"
+fi
+```
 
-Script Logic:
+Use case: Run via cron to periodically check memory on servers.
 
-Uses df -h to get disk usage.
+---
 
-Calculates free space percentage.
+### Project 2 — Monitor disk space and send alert email
+Purpose: Check free disk percentage for a filesystem and email an alert if it falls below a threshold.
 
-Sends an alert email using mail if space is below threshold.
-
-Setup Instructions:
-nano disk_monitor.sh
-chmod +x disk_monitor.sh
-sudo apt update
-sudo apt install mailutils -y
-./disk_monitor.sh
-crontab -e
-*/10 * * * * /path/to/disk_monitor.sh
-Sample Code:
-
-#!/bin/bash
+```bash
+#!/usr/bin/env bash
+# disk_monitor.sh
 THRESHOLD=20
 TO="your_email@example.com"
 SUBJECT="Disk Space Alert on $(hostname)"
 FILESYSTEM="/"
 
-FREE_SPACE=$(df -h "$FILESYSTEM" | awk 'NR==2 {gsub("%",""); print 100 - $5}')
+# Get available percentage (100 - used%)
+FREE_PCT=$(df -P "$FILESYSTEM" | awk 'NR==2 {gsub("%","", $5); print 100 - $5}')
 
-if [ "$FREE_SPACE" -lt "$THRESHOLD" ]; then
-  MESSAGE="⚠️ Warning: Only $FREE_SPACE% disk space left on $FILESYSTEM of $(hostname)"
+if [[ -z "$FREE_PCT" ]]; then
+  echo "Unable to determine disk usage for $FILESYSTEM"
+  exit 1
+fi
+
+if (( FREE_PCT < THRESHOLD )); then
+  MESSAGE="⚠️ Warning: Only ${FREE_PCT}% disk space left on ${FILESYSTEM} of $(hostname)"
   echo "$MESSAGE" | mail -s "$SUBJECT" "$TO"
 fi
-Use Case:
-Perfect for production environments where disk space needs constant monitoring.
+```
 
-## 📦 Project 3: Archive Older or Larger Files
-Purpose:
-Automatically compress and archive files that are either:
-
-Larger than a specified size (e.g., 20MB), or
-
-Older than a specified number of days (e.g., 10 days)
-
-Script Logic:
-
-Accepts a directory path.
-
-Checks if the directory exists.
-
-Creates an archive/ folder if not present.
-
-Finds files using find with -size and -mtime.
-
-Compresses files using gzip.
-
-Moves them to the archive folder.
-
-Can be scheduled via cron for daily execution.
-
-bash
-Copy code
-#!/bin/bash
-DIR="/path/to/target"
-ARCHIVE="$DIR/archive"
-
-# Create archive folder if not exists
-mkdir -p "$ARCHIVE"
-
-# Find and compress large files
-find "$DIR" -type f -size +20M -exec gzip {} \; -exec mv {}.gz "$ARCHIVE" \;
-
-# Find and compress old files
-find "$DIR" -type f -mtime +10 -exec gzip {} \; -exec mv {}.gz "$ARCHIVE" \;
-Cron Setup:
-
-bash
-Copy code
-crontab -e
-0 1 * * * /path/to/archive_script.sh
-Use Case:
-Ideal for log rotation, backup automation, or cleaning up large datasets.
-
-🛠️ Tools & Commands Used
-Core Commands: free, df, ls, pwd, cd, mkdir, rm, mv, cp
-
-Text Processing: awk, grep, find, tar, gzip
-
-System & Automation: mail, logger, crontab, nohup
-
-Bash Constructs: if, case, for, while, until, functions, arguments, shift, exit, set -x, set -e
-
-📌 How to Run Scripts
-bash
-Copy code
-# Make executable
-chmod +x script_name.sh
-
-# Run directly
-./script_name.sh
-
-# Or use
-bash script_name.sh
-📎 Logging & Debugging
-Use logger "message" to log system events.
-
-Enable debugging with set -x.
-
-Exit on error with set -e.
-
-🧩 Automation Tips
-Use nohup to run long scripts in the background.
-
-Redirect output to files using > or >>.
-
-Use /dev/null to suppress unwanted output.
-
-🧑‍💻 Author
-Samuel
-Learning Bash scripting through hands-on automation projects and system-level problem solving.
-
-🏁 License
-This project is open-source and available under the MIT License.
-
-pgsql
-Copy code
+Setup notes:
+- Install mailutils (Debian/Ubuntu): `sudo apt update && sudo apt install -y mailutils`  
+- Make executable and add to cron: `chmod +x disk_monitor.sh` and add a cron entry like `*/10 * * * * /path/to/disk_monitor.sh`
 
 ---
 
-✅ This is in perfect **GitHub README format** — with sections, code blocks, tables, and headings properly structured.  
-✅ You can **copy and paste** this into `README.md` and push it directly.  
-✅ Once you add your project scripts into a `projects/` folder, you can link them easily under the “Projects” section.  
+### Project 3 — Archive older or larger files
+Purpose: Compress and move files that are larger than a given size or older than N days into an archive folder.
 
-Would you like me to also add a small **repository structure tree** (like `tree` view) at the top of
+```bash
+#!/usr/bin/env bash
+# archive_files.sh
+DIR="/path/to/target"
+ARCHIVE="$DIR/archive"
+MIN_SIZE="20M"    # files larger than this
+MAX_AGE_DAYS=10   # files older than this
+
+if [[ ! -d "$DIR" ]]; then
+  echo "Directory $DIR does not exist"
+  exit 1
+fi
+
+mkdir -p "$ARCHIVE"
+
+# Find and compress large files
+find "$DIR" -maxdepth 1 -type f -size +${MIN_SIZE} -print0 \
+  | xargs -0 -I{} bash -lc 'gzip -c "{}" > "${1}/$(basename "{}").gz"' -- "$ARCHIVE"
+
+# Find and compress old files
+find "$DIR" -maxdepth 1 -type f -mtime +${MAX_AGE_DAYS} -print0 \
+  | xargs -0 -I{} bash -lc 'gzip -c "{}" > "${1}/$(basename "{}").gz"' -- "$ARCHIVE"
+```
+
+Cron example: `0 1 * * * /path/to/archive_files.sh` — run daily at 01:00.
+
+---
+
+## Tools & commands used
+- Core: `free`, `df`, `ls`, `pwd`, `cd`, `mkdir`, `rm`, `mv`, `cp`  
+- Text processing: `awk`, `grep`, `find`, `xargs`, `tar`, `gzip`  
+- System & automation: `mail`, `logger`, `crontab`, `nohup`  
+- Bash constructs: `if`, `case`, `for`, `while`, `until`, functions, arguments, `shift`, `exit`, `set -x`, `set -e`
+
+---
+
+## How to run scripts
+
+Make a script executable:
+
+```bash
+chmod +x script_name.sh
+```
+
+Run directly:
+
+```bash
+./script_name.sh
+# or
+bash script_name.sh
+```
+
+---
+
+## Logging & debugging tips
+- Use `logger "message"` to add system log entries.  
+- Enable execution tracing during debugging: `set -x`.  
+- Exit on first error during a script: `set -e`.  
+- Redirect output using `>` or `>>`; use `/dev/null` to discard output.
+
+---
+
+## Author
+Samuel — learning Bash scripting via hands-on automation and system-level tasks.
+
+## License
+MIT
