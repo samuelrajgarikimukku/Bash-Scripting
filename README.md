@@ -34,14 +34,14 @@ Each script corresponds to a specific concept or use case. Examples include:
 
 ---
 
-## 🚀 Projects (Main Section)
+# 🚀 Projects (Main Section)
 
 These are **real-world automation scripts** built using Bash.  
 Each project demonstrates how scripting can solve practical system-level problems.
 
 ---
 
-### 🧠 **Project 1: Monitor Free Memory and Alert**
+## 🧠 **Project 1: Monitor Free Memory and Alert**
 
 **Purpose**:  
 Monitor available RAM and alert the user if memory drops below a defined threshold.
@@ -52,7 +52,7 @@ Monitor available RAM and alert the user if memory drops below a defined thresho
 - Compares it against a threshold (e.g., 500MB).
 - Prints a warning if memory is low.
 
-```bash
+''' bash '''
 #!/bin/bash
 FREE_SPACE=$(free -mt | grep "Total" | awk '{print $4}')
 TH=500
@@ -62,10 +62,10 @@ if [[ $FREE_SPACE -lt $TH ]]; then
 else
   echo "✅ RAM Space is sufficient - $FREE_SPACE MB"
 fi
-Use Case:
+#### Use Case:
 Ideal for servers or systems where memory usage needs to be monitored periodically.
 
-💽 Project 2: Monitor Disk Space and Send Alert Email
+## 💽 Project 2: Monitor Disk Space and Send Alert Email
 Purpose:
 Monitor disk usage and send an alert email if free space falls below a threshold.
 
@@ -78,9 +78,6 @@ Calculates free space percentage.
 Sends an alert email using mail if space is below threshold.
 
 Setup Instructions:
-
-bash
-Copy code
 nano disk_monitor.sh
 chmod +x disk_monitor.sh
 sudo apt update
@@ -90,8 +87,6 @@ crontab -e
 */10 * * * * /path/to/disk_monitor.sh
 Sample Code:
 
-bash
-Copy code
 #!/bin/bash
 THRESHOLD=20
 TO="your_email@example.com"
@@ -107,7 +102,7 @@ fi
 Use Case:
 Perfect for production environments where disk space needs constant monitoring.
 
-📦 Project 3: Archive Older or Larger Files
+## 📦 Project 3: Archive Older or Larger Files
 Purpose:
 Automatically compress and archive files that are either:
 
